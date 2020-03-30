@@ -5,6 +5,15 @@ Created on Mon Mar 30 17:47:10 2020
 
 @author: nicolas
 """
+from numpy import exp
+from math import sqrt
+import numpy as np
+from numpy import random
+from math import pi
+import tensorflow as tf
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
 
 ########### FONCTIONS RELATIVES A LA FONCTION :
     
