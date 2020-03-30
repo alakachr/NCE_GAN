@@ -164,7 +164,7 @@ def NCE_Adam1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learn
 
 ################### GAN 1D:
     
-    def GANDescent(x_batches, m, s,mu_init , sigma_init, cte_init , learning_rate = [0.01,0.01], max_iters = 500, nu=1):    
+def GANDescent(x_batches, m, s,mu_init , sigma_init, cte_init , learning_rate = [0.01,0.01], max_iters = 500, nu=1):    
     
     m0 = mu_init 
     s0 =sigma_init
@@ -218,3 +218,10 @@ def NCE_Adam1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learn
   
     result = Gradient(cte,m0,s0, error_mu,error_sigma, error_cte, ctes,mus,sigmas)
     return result
+
+def kl_divergence(p, q): #distance de Kullback-Leibler
+    return np.sum(np.where(p != 0, p * np.log(p / q), 0))
+
+def f(k, i): #fonction pour dessiner en 3D 
+    return L[np.argwhere(L_mu==k)[0][0], np.argwhere(L_sigma==i)[0][0]]
+
