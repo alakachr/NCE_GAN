@@ -33,18 +33,18 @@ def h_min():
 
 
     # instance attribute
-    def __init__(self, cte,mu,sigma, error_mu,error_sigma, error_cte, ctes,mus,sigmas):
-        self.cte = cte
-        self.mu = mu
-        self.sigma = sigma
+          def __init__(self, cte,mu,sigma, error_mu,error_sigma, error_cte, ctes,mus,sigmas):
+              self.cte = cte
+              self.mu = mu
+              self.sigma = sigma
         
-        self.error_mu = error_mu
-        self.error_sigma = error_sigma
-        self.error_cte = error_cte 
+              self.error_mu = error_mu
+              self.error_sigma = error_sigma
+              self.error_cte = error_cte 
         
-        self.ctes = ctes
-        self.mus = mus
-        self.sigmas = sigmas
+              self.ctes = ctes
+              self.mus = mus
+              self.sigmas = sigmas
         
  #############################@@@@@@@@@@@@@@@@@ FONCTIONS 1D @@@@@@@@@@@@@@@@@@@@############################       
 ############# NCE_1:
