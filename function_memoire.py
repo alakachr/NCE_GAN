@@ -97,9 +97,8 @@ def NCEDescent1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, lea
             #sigmas.append(sigma)
             
             
-        if (tf.norm(ctes[-1]-ctes[-2])<1e-5):
-            print("fini à la ", itr, " iteration")
-            break
+        if (tf.norm(cte[-1]-cte[-2])<1e-6):
+            return Gradient(cte,m0,s0, error_mu,error_sigma, error_cte, ctes,mus,sigmas)
     
         
             
