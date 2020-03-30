@@ -38,11 +38,11 @@ def h_min():
 
 ############ CLASSS GRADIENT:
     
-    class Gradient:
+class Gradient:
 
 
     # instance attribute
-          def __init__(self, cte,mu,sigma, error_mu,error_sigma, error_cte, ctes,mus,sigmas):
+    def __init__(self, cte,mu,sigma, error_mu,error_sigma, error_cte, ctes,mus,sigmas):
               self.cte = cte
               self.mu = mu
               self.sigma = sigma
