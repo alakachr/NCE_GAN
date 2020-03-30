@@ -49,7 +49,7 @@ def h_min():
  #############################@@@@@@@@@@@@@@@@@ FONCTIONS 1D @@@@@@@@@@@@@@@@@@@@############################       
 ############# NCE_1:
     
-    def NCEDescent1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learning_rate = [0.01, 0.01],max_iters = 50, nu = 1):    
+def NCEDescent1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learning_rate = [0.01, 0.01],max_iters = 50, nu = 1):    
     
     m0 = mu_init 
     s0 =sigma_init
@@ -64,6 +64,7 @@ def h_min():
     sigmas = []
     ctes = [cte_init]
      
+    
     batch_size= len(x_batches[0])
 
     
