@@ -13,6 +13,7 @@ from math import pi
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from scipy.stats import norm
+from tabulate import tabulate
 
 
 ########### FONCTIONS RELATIVES A LA FONCTION :
@@ -105,11 +106,11 @@ def NCEDescent1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, lea
     result = Gradient(cte,m0,s0, error_mu,error_sigma, error_cte, ctes,mus,sigmas)
     return result
 
-############# ADAM:
+############# other descent algorithms:
     
     
             
-def NCE_Adam1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learning_rate = [0.01, 0.01],max_iters = 50, nu = 1):    
+def NCERMS1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learning_rate = [0.01, 0.01],max_iters = 50, nu = 1):    
     
     m0 = mu_init 
     s0 =sigma_init
@@ -119,14 +120,14 @@ def NCE_Adam1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learn
     error_mu = [] 
     error_sigma = []
     error_cte = [] 
-    
+    lr=learning_rate[0]
     mus = []
     sigmas = []
     ctes = [cte_init]
      
     batch_size= len(x_batches[0])
     
-    opt= tf.optimizers.RMSprop(learning_rate=0.1)
+    opt= tf.optimizers.RMSprop(learning_rate=lr)
 
     
     for itr in range(max_iters): 
@@ -169,6 +170,127 @@ def NCE_Adam1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learn
     result = Gradient(cte,m0,s0, error_mu,error_sigma, error_cte, ctes,mus,sigmas)
     return result
 
+def NCEAdam1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learning_rate = [0.01, 0.01],max_iters = 50, nu = 1):    
+    
+    m0 = mu_init 
+    s0 =sigma_init
+    cte = tf.Variable(cte_init,dtype='float32')
+    print(cte)
+    #not used for nce
+    error_mu = [] 
+    error_sigma = []
+    error_cte = [] 
+    lr= learning_rate[0]
+    
+    mus = []
+    sigmas = []
+    ctes = [cte_init]
+     
+    batch_size= len(x_batches[0])
+    
+    opt= tf.optimizers.Adam(learning_rate = lr)
+
+    
+    for itr in range(max_iters): 
+        
+        for x in x_batches:
+            z= random.normal( 0, 1, int(batch_size*nu) )
+            q = m0+s0*z 
+            #print('q===',q)
+            #Gradient in respect to the constant
+            pm0_x = pm0(x,m,s)
+            pm0_q = pm0(q,m,s)
+            pn_q  = pn(q,m0,s0)
+            pn_x  = pn(x,m0,s0)
+            #print('PMO_x', pm0_x)
+            #print('PMO_q===',pm0_q)
+            #print('PN_Q====',pn_q)
+            #print('PN_X===', pn_x)
+            
+            
+            def h_min():
+                return(-tf.math.reduce_mean(tf.math.log(pm0_x*cte/(pm0_x*cte + nu*pn_x)))-nu*tf.math.reduce_mean(tf.math.log(pn_q/(nu*pn_q+pm0_q*cte))))
+                
+            def h(c):
+                return(-tf.math.reduce_mean(tf.math.log(pm0_x*cte/(pm0_x*cte + nu*pn_x)))-nu*tf.math.reduce_mean(tf.math.log(pn_q/(nu*pn_q+pm0_q*cte))))
+                #print('H_min_x===',pm0_x*cte/(pm0_x*cte + pn_x))
+                #print('H_min_y====',pn_q/(pn_q+pm0_q*cte))
+                
+                
+    
+            #def h(cte):
+                #return(sum(tf.math.log(pm0_x*cte/(pm0_x*cte + pn_x)))/len(x)+sum(tf.math.log(pn_q/(pn_q+pm0_q*cte)))/len(x))
+
+            #print('CTE===',cte)
+            opt.minimize(h_min,var_list=[cte])
+            print("CTE3=====",cte.numpy())
+            ctes.append(cte.numpy())
+            if (tf.norm(ctes[-1]-ctes[-2])<1e-5):
+                return Gradient(cte,m0,s0, error_mu,error_sigma, error_cte, ctes,mus,sigmas)
+            
+    result = Gradient(cte,m0,s0, error_mu,error_sigma, error_cte, ctes,mus,sigmas)
+    return result
+
+def NCEMom1D(x_batches, m, s,mu_init =10, sigma_init=10, cte_init = 0.2, learning_rate = [0.01, 0.01],max_iters = 50, nu = 1):    
+    
+    m0 = mu_init 
+    s0 =sigma_init
+    cte = tf.Variable(cte_init,dtype='float32')
+    print(cte)
+    #not used for nce
+    error_mu = [] 
+    error_sigma = []
+    error_cte = [] 
+    lr= learning_rate[0]
+    
+    mus = []
+    sigmas = []
+    ctes = [cte_init]
+     
+    batch_size= len(x_batches[0])
+    
+    opt= tf.optimizers.SGD(learning_rate = lr, momentum=0.9)
+
+    
+    for itr in range(max_iters): 
+        
+        for x in x_batches:
+            z= random.normal( 0, 1, int(batch_size*nu) )
+            q = m0+s0*z 
+            #print('q===',q)
+            #Gradient in respect to the constant
+            pm0_x = pm0(x,m,s)
+            pm0_q = pm0(q,m,s)
+            pn_q  = pn(q,m0,s0)
+            pn_x  = pn(x,m0,s0)
+            #print('PMO_x', pm0_x)
+            #print('PMO_q===',pm0_q)
+            #print('PN_Q====',pn_q)
+            #print('PN_X===', pn_x)
+            
+            
+            def h_min():
+                return(-tf.math.reduce_mean(tf.math.log(pm0_x*cte/(pm0_x*cte + nu*pn_x)))-nu*tf.math.reduce_mean(tf.math.log(pn_q/(nu*pn_q+pm0_q*cte))))
+                
+            def h(c):
+                return(-tf.math.reduce_mean(tf.math.log(pm0_x*cte/(pm0_x*cte + nu*pn_x)))-nu*tf.math.reduce_mean(tf.math.log(pn_q/(nu*pn_q+pm0_q*cte))))
+                #print('H_min_x===',pm0_x*cte/(pm0_x*cte + pn_x))
+                #print('H_min_y====',pn_q/(pn_q+pm0_q*cte))
+                
+                
+    
+            #def h(cte):
+                #return(sum(tf.math.log(pm0_x*cte/(pm0_x*cte + pn_x)))/len(x)+sum(tf.math.log(pn_q/(pn_q+pm0_q*cte)))/len(x))
+
+            #print('CTE===',cte)
+            opt.minimize(h_min,var_list=[cte])
+            print("CTE3=====",cte.numpy())
+            ctes.append(cte.numpy())
+            if (tf.norm(ctes[-1]-ctes[-2])<1e-5):
+                return Gradient(cte,m0,s0, error_mu,error_sigma, error_cte, ctes,mus,sigmas)
+            
+    result = Gradient(cte,m0,s0, error_mu,error_sigma, error_cte, ctes,mus,sigmas)
+    return result
 
 
 ################### GAN 1D:
@@ -227,6 +349,7 @@ def GANDescent(x_batches, m, s,mu_init , sigma_init, cte_init , learning_rate = 
   
     result = Gradient(cte,m0,s0, error_mu,error_sigma, error_cte, ctes,mus,sigmas)
     return result
+
 
 def kl_divergence(p, q): #distance de Kullback-Leibler
     return np.sum(np.where(p != 0, p * np.log(p / q), 0))
