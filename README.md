@@ -8,6 +8,7 @@ an instrumental distribution pn, this distribution could be optimised and the co
 optimisation as a supervised learning problem
 
 
+Reference
 Gutmann, M. U. and Hyvärinen, A. (2012). Noise-contrastive estimation of unnormalized
 statistical models, with applications to natural image statistics. J. Mach. Learn. Res., 13,
 307–361. http://dl.acm.org/citation.cfm?id=2188385.2188396.
