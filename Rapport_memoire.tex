@@ -1,0 +1,322 @@
+\documentclass{article}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{graphicx}
+
+\usepackage[english]{babel}
+\usepackage{biblatex}
+
+\usepackage{float}
+
+
+\begin{document}
+
+%%%%%% GAN 
+
+\section{GAN}
+
+\subsection{Theoretical background}
+
+ \textit {Generative Adversarial Network}, in short GAN (Goodfellow, 2014), is an unsupervised learning framework which aims to build a generative model capable of generating  synthetic data indistinguishable from natural observations. These methods have notably been applied for synthetic image generation, and are arguably the most popular neural generative  framework currrently. Other deep generative models examples are Restrictedd Boltzmann Machines (RBM) , Variational Auto Encoders (Diederik, Welling , 2013 ), or deep belief networks (DBN) .
+
+In order to learn the generative distribution $ p_ {g} $ over the  data $ x $, the GAN's algorithm trains a generator $G$ and a discriminator $D$ to play a minimax game with two players. The goal of the generator $G$ is to "fool" the discriminator $D$ by  producing  indistinguishable sample, while  $D$ aims to predict correctly if a realization comes from the real data distribution or the synthetic data distribtion. To do this, $D$ is defined as being a differentiable function (usually a neural network) which receives an observation as input and returns the probability that it came from the real dataset. $G$ is also a differentiable function (usually a neural network as well), but it receives a latent noise $z$  as input and returns synthetic observations. It is interesting to see $G$  as some sort of inverse cdf $F^{-1}$ that receives uniform samples  as input  and generates realization of a random variable with law $F$. We therefore want for $D$, to maximize the log probability of the classification problem, and simultaneously for $G$, to minimize the probability that $D$ is mistaken on synthetic realizations. This consists in solving the following optimization problem:
+
+\begin{equation}
+\min _{G} \max _{D} V(D, G)=\mathbb{E}_{\boldsymbol{x} \sim p_{\text {data }}(\boldsymbol{x})}[\log D(\boldsymbol{x})]+\mathbb{E}_{\boldsymbol{z} \sim p_{\boldsymbol{z}}(\boldsymbol{z})}[\log (1-D(G(\boldsymbol{z})))]
+\end{equation}
+
+
+To solve this problem, Goodfellow et al propose the following  stochastic gradient descent lgorithm , which consits in a gradient ascent and a gradient descent running in parallel : 
+
+
+%Algorithm%%%%%%%%%%%%%%%%%%%%
+\begin{algorithm}[H]
+\small
+\begin{algorithmic}[1]
+\FOR{nb d'iterations d'entrainement }
+\FOR{ k fois}
+
+\item Sample minibatch of m noise samples   $\{z_{(1)} , . . . , z_{(m)}\}$ selon l'a priori sur le bruit $ p_{z}$;
+\item Sample minibatch of m examples  $\{x_{(1)} , . . . , x_{(m)}\}$ selon $ p_{z}$;
+\item Update the discriminator by ascending its stochastic gradient:
+
+\begin{equation*}
+\nabla_{\theta_{d}} \frac{1}{m} \sum_{i=1}^{m}\left[\log D\left(x^{(i)}\right)+\log \left(1-D\left(G\left(z^{(i)}\right)\right)\right)\right]
+ \end{equation*}
+\ENDFOR
+
+\item Sample minibatch of m noise samples  $\{z_{(1)} , . . . , z_{(m)}\}$ selon l'a priori sur le bruit $ p_{z}$
+\item Update the generator by descending its stochastic gradient:
+\begin{equation*}
+\nabla_{\theta_{g}} \frac{1}{m} \sum_{i=1}^{m} \log \left(1-D\left(G\left(z^{(i)}\right)\right)\right)
+\end{equation*}
+\ENDFOR
+\end{algorithmic}
+\caption{1 Minibatch stochastic gradient descent training of generative adversarial nets}
+\label{alg:seq}
+\end{algorithm}
+%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%% Properties of GAN %%%%%%%%%%%%%%%%
+GAN offers  some theoretical garantees : convergence , jensen shannon divergence
+
+\textbf{Proposition 1.} For G fixed, the optimal discriminator D is
+\begin{equation}D_{G}^{*}(\boldsymbol{x})=\frac{p_{\text {data}}(\boldsymbol{x})}{p_{\text {data}}(\boldsymbol{x})+p_{g}(\boldsymbol{x})}\end{equation}
+
+\textit{Proof} (taken from \cite{einstein}
+$$
+\begin{aligned}
+\arg \max _{D} V(D, G) &=\arg \max _{D} E_{u \sim p_{t}}[\ln D(u)]+E_{u \sim p_{n}}[\ln (1-D(u))] \\
+&=\arg \max _{D} \int_{u} p_{d}(u) \ln D(u) d u+\int_{u} p_{n}(u) \ln (1-D(u)) d u \\
+&=\arg \max _{D} \int_{u} p_{d}(u) \ln D(u)+p_{n}(u) \ln (1-D(u)) d u \\
+&=\arg \max _{D} p_{d}(u) \ln D(u)+p_{n}(u) \ln (1-D(u))
+\end{aligned}
+$$
+Given $u,$ find the optimal discriminator:
+$$
+\frac{d\left(p_{d}(u) \ln D(u)+p_{n}(u) \ln (1-D(u))\right)}{d D(u)}=p_{d}(u) \frac{1}{D(u)}-p_{n}(u) \frac{1}{1-D(u)}
+$$
+
+the solution is expressed as the form:
+$$
+D(u)=\frac{p_{d}(u)}{p_{d}(u)+p_{n}(u)}=\frac{1}{1+\frac{p_{n}(u)}{p_{d}(u)}}=\frac{1}{1+\exp \left(-\ln \frac{p_{d}(u)}{p_{n}(u)}\right)}
+$$
+
+
+\textbf{Theorem 1.}   The global minimum of the virtual training criterion C(G) is achieved if and only if
+$p_{g} = p_{data}$ .  Minimizing 	$C(G)$ is equivalent to minimizing the the Jensen–
+Shannon divergence between the model’s distribution and the data generating process which is given by 
+\begin{equation}K L\left(p_{\text {data }} \| \frac{p_{\text {data }}+p_{g}}{2}\right)+K L\left(p_{g} \| \frac{p_{\text {data }}+p_{g}}{2}\right)\end{equation}
+
+
+\textbf{Proposition 2 .}  If $G$ and $D$ have enough capacity, and at each step of Algorithm 1 , the discriminator is allowed to reach its optimum given $G,$ and $p_{g}$ is updated so as to improve the criterion
+$$
+\mathbb{E}_{x \sim p_{\omega}\left[\log D_{G}^{*}(\boldsymbol{x})\right]+\mathbb{E}_{\boldsymbol{x} \sim p_{g}}\left[\log \left(1-D_{G}^{*}(\boldsymbol{x})\right)\right]}
+$$
+then $p_{g}$ converges to $p_{\text {data}}$
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%% LINK GAN NCE %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Link between GAN and NCE}
+
+
+Recall Gan  objective function  is similar to the one we encountered for NCE :
+
+
+\begin{equation}
+\min _{G} \max _{D} V(D, G)=\mathbb{E}_{\boldsymbol{x} \sim p_{\text {data }}(\boldsymbol{x})}[\log D(\boldsymbol{x})]+\mathbb{E}_{\boldsymbol{z} \sim p_{\boldsymbol{z}}(\boldsymbol{z})}[\log (1-D(G(\boldsymbol{z})))]
+\end{equation}
+
+ if we take
+ \begin{align*}
+ D(u)&= h(u) =\frac{p_{m}(\mathbf{u} )}{p_{m}(\mathbf{u} )+ p_{g}(\mathbf{u})} 
+ \end{align*}
+And
+\begin{align*}
+ y = G(z)
+ \end{align*}
+
+
+
+where $ p_{g}:$ is G's output density , \\ 
+
+\begin{equation}
+\max _{\theta}J(\boldsymbol{\theta})=\mathrm{E}\{\ln [h(\mathbf{x} ; \boldsymbol{\theta})]\}+ \mathrm{E}\{\ln [1-h(\mathbf{y} ; \boldsymbol{\theta})]\}
+\end{equation}
+
+
+
+We can see both objective function are the same.
+
+This means NCE can be interpreted as  form of GAN  with a fixed generator. Goodfellow et al. (2014) , made this connection and  highlited the inconvenience of using afixed noise distribution. .We therefore aim to define a new contrastive estimatior with a dynamic generator as the one the soution of the problem :
+
+\begin{equation} max min \mathbb{E}_{\boldsymbol{x} \sim p_{\text {m }}}\left[\log \frac{ctep_{\text {m}}(\boldsymbol{x})}{ctep_{\text {m }}(\boldsymbol{x})+p_{g}(\boldsymbol{x})}\right]+\mathbb{E}_{\boldsymbol{y} \sim p_{g}}\left[\log \frac{p_{g}(\boldsymbol{y})}{ctep_{\text {m }}(\boldsymbol{y})+p_{g}(\boldsymbol{y})}\right]\end{equation}
+ 
+The  objective function gradient for the Discrimanator (with respect to the normalizing factor, $cte$ ) is then
+
+\begin{equation}
+\nabla_{D} =  \frac{1}{n} \sum_{x} \frac{1}{cte} -   \frac{ p_{m}(x)}{ctep_{m}(x)+p_{g}(x) } - \frac{1}{n}\sum_{y} \frac{ p_{m}(y)}{ctep_{m}(y)+p_{g}(y)}     
+\end{equation}
+
+Notice that instead of using a multilayered neural network as a discriminator we used $\frac{p_{m}}{p_{m}+p_{g}}$.  It  is the logistic classifier used in NCE ,  and it corresponds for a fixed $G$, to  the optimal GAN disriminator.  This means we might avoid some training problem encuntered when training GANs
+
+We then proceed to define the Generator. We will first consider a simpler case where the  generator is restricted to a familiy of distribution . We will refer to  this as a parametric GAN 
+
+%%%%% PARAMETRIC  Gan %%%%%%%%
+
+\subsection{Parametric GAN}
+
+
+\subsubsection{One dimensional Case}
+
+We consider a normal distribution for the data : $ x \sim N(\mu_{x} , \sigma_{x} ) $. The normalization factor we consider is then given by :$ \frac{1}{\sigma_{x}\sqrt{2\pi}} $
+
+We then define a parametric gaussian generator as  
+ $G(z) = \mu_{g} z+\sigma_{g}$ with  $z \sim N(0,1) $ et  $\theta_{g} =  \{\mu _{g}; \sigma_{g}\}$
+
+We compute the  Generator objective function gradient  with respect to   $\theta_{g}$.  But there is an important subtlety  here : even if the $G$'s parameter appear in the expression of $p_{g}$,  we are not differentating  $p_{g}$ with respect to $\theta_{g}$ . This is because we are minimizing with respect to $G$ and not with respect to $p_{g}$. Minimizing  
+ 
+\begin{equation}
+ \frac{1}{n}\sum_{y} \frac{ p_{m}(y)}{ctep_{m}(y)+p_{g}(y)}  
+\end{equation}
+
+%grad_mu = -(q-mu_{n)/s0**2 +((q-m0)*norm.pdf(q, m0, s0)/s0**2 + 
+  %                      (q-m)*cte*exp(-0.5*((q-m)/s)**2)/s**2)/(cte*pm0(q,m,s) + norm.pdf(q,m0,s0))
+ %grad_sigma = grad_mu*z
+
+We train this model  according to Algorithm 1 to estimate $cte$ and  $\theta_{g}$.  We provide some numerical resul for this estimation ;
+
+\begin{center}
+ \begin{tabular}{||c c c c||} 
+ \hline
+ Data & True cte2 & $\hat{cte}$ estimate & $\mu _{g}$  \\ [0.5ex] 
+ \hline\hline
+  $ x \sim N(\mu_{x} , \sigma_{x} ) $2 & 6 & 87837 & 787 \\ 
+ \hline
+ 2 & 7 & 78 & 5415 \\
+ \hline
+ 3 & 545 & 778 & 7507 \\
+ \hline
+ 4 & 545 & 18744 & 7560 \\
+ \hline
+ 5 & 88 & 788 & 6344 \\ [1ex] 
+ \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Multi dimensional  Case }
+
+We consider a (non degenerate) d-multvariate inormal distribution for the data : $ X  \sim N(\mu_{x} , \Sigma_{x} ) $.  with $\mu_{x}   \in  \mathbb{R}^{d}$   The normalization factor we consider is then given by :$ \frac{1}{\sqrt{2\pi^{d} |\Sigma_{x}|}} $
+
+We then define a parametric gaussian generator as  
+
+\begin{equation}\mathbf{G(Z) }=\boldsymbol{A Z}+\mu \text { for } Z_{n} \sim \mathcal{N}(0,1)\end{equation}
+
+here $\mathbf{\Sigma}=\boldsymbol{A} \boldsymbol{A}^{\mathrm{T}}$
+
+We compute the  Generator objective function gradient  with respect to   $\theta_{g}$ as we did for the one dimensional case . This done with Tensorflow Automatic differentiation
+ 
+\begin{equation}
+ \frac{1}{n}\sum_{y} \frac{ p_{m}(y)}{ctep_{m}(y)+p_{g}(y)}  
+\end{equation}
+
+%grad_mu = -(q-mu_{n)/s0**2 +((q-m0)*norm.pdf(q, m0, s0)/s0**2 + 
+  %                      (q-m)*cte*exp(-0.5*((q-m)/s)**2)/s**2)/(cte*pm0(q,m,s) + norm.pdf(q,m0,s0))
+ %grad_sigma = grad_mu*z
+
+We train this model  according to Algorithm 1 to estimate $cte$ and  $\theta_{g}$.  We provide some numerical resul for this estimation ;
+
+\begin{center}
+ \begin{tabular}{||c c c c||} 
+ \hline
+ Data & True cte2 & $\hat{cte}$ estimate & $\mu _{g}$  \\ [0.5ex] 
+ \hline\hline
+  $ x \sim N(\mu_{x} , \sigma_{x} ) $2 & 6 & 87837 & 787 \\ 
+ \hline
+ 2 & 7 & 78 & 5415 \\
+ \hline
+ 3 & 545 & 778 & 7507 \\
+ \hline
+ 4 & 545 & 18744 & 7560 \\
+ \hline
+ 5 & 88 & 788 & 6344 \\ [1ex] 
+ \hline
+\end{tabular}
+\end{center}
+
+\subsection{Non Parametric GAN}
+
+\subsubsection{Neural Net theoretical background }
+
+We can define neural net as a composition of differentiable function. There exist may kinds of neural nets : MLP, CNN , RNN, the simplest one being the MLP. 
+A MLP can be seen as a composition of layers h 
+
+ given by
+$$
+\boldsymbol{h}^{(1)}=g^{(1)}\left(\boldsymbol{W}^{(1) \top} \boldsymbol{x}+\boldsymbol{b}^{(1)}\right)
+$$
+"the second layer is given by
+$$
+\boldsymbol{h}^{(2)}=g^{(2)}\left(\boldsymbol{W}^{(2) \top} \boldsymbol{h}^{(1)}+\boldsymbol{b}^{(2)}\right)
+$$.
+
+Hidden layer , size of layer is the number unit , activation function (link function), 
+cost function, conditional expectation, Universal approximation theorem (which allows nn with large capacity to perform a non parametric inference.
+
+Training : Gradient Descent , Backpropagation
+
+Designing and training Neural Network is an art because it relies heavily on the choice of hypermater. One the most important hyperparametr is for example the learning rate. Arhitecture hyperparametr include type architecture, number of hidden layer, number units. 
+
+\begin{figure} [H]
+  \includegraphics[width=.99\textwidth]{nn2.png}
+\caption{ Generator Architecture  : $\mu_{g}$ = 23.94 et $\sigma_{g}$ = 7 , FIGURE PRODUCED WITH alexlenail }
+\end{figure}
+
+
+\begin{figure} [H]
+  \includegraphics[width=.99\textwidth]{model.png}
+\caption{ Generator Architecture  : $\mu_{g}$ = 23.94 et $\sigma_{g}$ = 7 , FIGURE PRODUCED WITH alexlenail }
+\end{figure}
+
+
+
+
+\begin{figure}  [H]
+    \centering
+    \begin{minipage}{0.6\textwidth}
+        \centering
+        \includegraphics[width=0.99\textwidth]{nn2} % first figure itself
+        \caption{first figure}
+    \end{minipage}\hfill
+    \begin{minipage}{0.4\textwidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{model} % second figure itself
+        \caption{second figure}
+    \end{minipage}
+\end{figure}
+
+
+\subsubsection{Kernel  Density estimation theoretical background }
+
+Kernel density estimation (KDE) is one of the most popular non parametric estimation method. it aims at estimating the density of a iid sample Xi . it is defined by 
+
+Bias and variance 
+An exemple of Kernel is the Gaussian kerenel. The kernel type and bandwith are hypermater as they should be specified
+It is generally assumed that the mot important hyperparmeter is the bandwith  (at least when Xi distribution is symetric) .
+The rule of thumb to choose the bandwwith. There also method based on cross validation.
+
+\subsubsection{Non parametric GAN Estimation}
+
+
+
+\section{GAN vs NCE}
+
+
+
+\begin{thebibliography}{9}
+\bibitem{latexcompanion} 
+Michel Goossens, Frank Mittelbach, and Alexander Samarin. 
+\textit{The \LaTeX\ Companion}. 
+Addison-Wesley, Reading, Massachusetts, 1993.
+
+\bibitem{einstein} 
+Albert Einstein. 
+\textit{Zur Elektrodynamik bewegter K{\"o}rper}. (German) 
+[\textit{On the electrodynamics of moving bodies}]. 
+Annalen der Physik, 322(10):891–921, 1905.
+
+\bibitem{Ziqiao's} 
+Ziqiao's Technical Blog,
+\\\texttt{https://ziqiaowanggeothe.github.io/2018/10/01/Comparison-between-NCE-and-GAN/}
+\end{thebibliography}
+
+\end{document}
